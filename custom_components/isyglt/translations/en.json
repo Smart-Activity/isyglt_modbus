@@ -48,28 +48,23 @@
       },
       "add_switch": {
         "title": "Add Switch",
-        "description": "Switch using one holding register with configurable on/off values.",
+        "description": "Switch using a native ISYGLT NE address. For example, enter 12.4 for NE 12.4. The Modbus coil and protocol offset are calculated automatically.",
         "data": {
           "name": "Name",
           "area_id": "Home Assistant area",
           "slave": "Slave / Unit ID",
-          "register": "Holding register",
-          "off_value": "Off value",
-          "on_value": "On value"
+          "isyglt_address": "ISYGLT NE address"
         }
       },
       "add_cover": {
         "title": "Add Cover",
-        "description": "Configure command register, 0-100 position feedback and open/close/stop values.",
+        "description": "Cover with two native ISYGLT NE addresses. Open and close send a 3-second long press. Stop sends a 200 ms short press on the same direction. Two short-press Button entities are also created.",
         "data": {
           "name": "Name",
           "area_id": "Home Assistant area",
           "slave": "Slave / Unit ID",
-          "command_register": "Command register",
-          "position_register": "Position register",
-          "open_value": "Open value",
-          "close_value": "Close value",
-          "stop_value": "Stop value"
+          "up_address": "ISYGLT NE up address",
+          "down_address": "ISYGLT NE down address"
         }
       },
       "add_climate": {
@@ -119,7 +114,10 @@
       "no_climates": "No Climate entities are configured."
     },
     "error": {
-      "invalid_isyglt_address": "Invalid ISYGLT address. For Dimmable use for example 8 (M 8); for Switched use for example 30.3 (NE 30.3)."
+      "invalid_isyglt_address": "Invalid ISYGLT address. For Dimmable use for example 8 (M 8); for Switched use for example 30.3 (NE 30.3).",
+      "invalid_switch_address": "Invalid Switch address. Use an NE group.bit address such as 1.1 or 30.3.",
+      "invalid_cover_address": "Invalid Cover address. Use an NE group.bit address such as 20.1.",
+      "cover_addresses_equal": "Up and down must use different NE addresses."
     }
   }
 }

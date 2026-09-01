@@ -48,28 +48,23 @@
       },
       "add_switch": {
         "title": "Switch toevoegen",
-        "description": "Schakelaar met één holding register en configureerbare aan/uit-waarden.",
+        "description": "Schakelaar op een ISYGLT NE-adres. Vul bijvoorbeeld 12.4 in voor NE 12.4. De Modbus coil en protocoloffset worden automatisch berekend.",
         "data": {
           "name": "Naam",
           "area_id": "Home Assistant ruimte",
           "slave": "Slave / Unit ID",
-          "register": "Holding register",
-          "off_value": "Waarde uit",
-          "on_value": "Waarde aan"
+          "isyglt_address": "ISYGLT NE-adres"
         }
       },
       "add_cover": {
         "title": "Cover toevoegen",
-        "description": "Configureer het commandoregister, positiefeedback (0-100) en de waarden voor open/dicht/stop.",
+        "description": "Cover met twee native ISYGLT NE-adressen. Open en dicht geven een long press van 3 seconden. Stop geeft een short press van 200 ms op dezelfde richting. Er worden ook twee short-press Button entities aangemaakt.",
         "data": {
           "name": "Naam",
           "area_id": "Home Assistant ruimte",
           "slave": "Slave / Unit ID",
-          "command_register": "Commandoregister",
-          "position_register": "Positieregister",
-          "open_value": "Waarde open",
-          "close_value": "Waarde dicht",
-          "stop_value": "Waarde stop"
+          "up_address": "ISYGLT NE-adres omhoog",
+          "down_address": "ISYGLT NE-adres omlaag"
         }
       },
       "add_climate": {
@@ -119,7 +114,10 @@
       "no_climates": "Er zijn geen Climate entities geconfigureerd."
     },
     "error": {
-      "invalid_isyglt_address": "Ongeldig ISYGLT-adres. Gebruik voor Dimbaar bijvoorbeeld 8 (M 8) en voor Schakelbaar bijvoorbeeld 30.3 (NE 30.3)."
+      "invalid_isyglt_address": "Ongeldig ISYGLT-adres. Gebruik voor Dimbaar bijvoorbeeld 8 (M 8) en voor Schakelbaar bijvoorbeeld 30.3 (NE 30.3).",
+      "invalid_switch_address": "Ongeldig Switch-adres. Gebruik een NE-adres als groep.bit, bijvoorbeeld 1.1 of 30.3.",
+      "invalid_cover_address": "Ongeldig Cover-adres. Gebruik een NE-adres als groep.bit, bijvoorbeeld 20.1.",
+      "cover_addresses_equal": "Omhoog en omlaag moeten verschillende NE-adressen gebruiken."
     }
   }
 }

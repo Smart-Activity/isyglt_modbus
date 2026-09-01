@@ -139,3 +139,14 @@ Voeg `https://github.com/Smart-Activity/isyglt_modbus` toe als **Custom reposito
 Vanaf v0.4.1 bevat `isyglt.zip` de bestanden van `custom_components/isyglt` direct in de root van het archief. Dit voorkomt een dubbel geneste installatiemap bij HACS.
 
 Na installatie of update via HACS moet Home Assistant opnieuw worden gestart.
+
+## Switch (v0.6.0)
+
+Nieuwe Switch entities gebruiken native **ISYGLT NE-adressering**. In Home Assistant vul je alleen naam, ruimte, Slave/Unit ID en een adres zoals `30.3` in. De integratie vertaalt dit automatisch naar `NE 30.3`, Modbus coil-referentie `000235` en protocoladres `234`. Aan/uit en feedback gebruiken dezelfde coil.
+
+Bestaande Switch entities uit oudere versies die met een raw holding register zijn opgeslagen blijven werken voor backward compatibility. Nieuwe Switches vragen geen raw Modbus-register of 0/100-waarden meer.
+
+## Cover (v0.6.0)
+Native Covers use two ISYGLT NE addresses: one for **Omhoog** and one for **Omlaag**. Home Assistant Open/Close sends a 3-second long press. Stop sends a 200 ms short press to the same direction that Home Assistant last started. Each Cover also creates two Button entities for explicit 200 ms short presses. Native Covers intentionally expose no position percentage because the installation has no real position feedback.
+
+Example: Omhoog `NE 20.1`, Omlaag `NE 20.2`.

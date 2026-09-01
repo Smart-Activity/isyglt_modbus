@@ -16,16 +16,18 @@ from homeassistant.const import CONF_HOST, CONF_NAME, CONF_PORT
 from homeassistant.core import callback
 from homeassistant.helpers import selector
 
-from .addressing import ISYGLTAddressError, resolve_light_address
+from .addressing import ISYGLTAddressError, resolve_cover_address, resolve_light_address, resolve_switch_address
 from .const import (
     CONF_AREA_ID, CONF_CLIMATES, CONF_CLOSE_VALUE, CONF_COMMAND_REGISTER,
+    CONF_DOWN_ADDRESS,
     CONF_ISYGLT_ADDRESS, CONF_LIGHT_KIND,
     CONF_COVERS, CONF_CURRENT_TEMP_REGISTER, CONF_ENTITY_UID, CONF_LIGHTS,
     CONF_MAX_TEMP, CONF_MIN_TEMP, CONF_OFF_VALUE, CONF_ON_VALUE, CONF_OPEN_VALUE,
     CONF_POSITION_REGISTER, CONF_REGISTER, CONF_SLAVE, CONF_STOP_VALUE,
+    CONF_UP_ADDRESS,
     CONF_SWITCHES, CONF_TARGET_TEMP_REGISTER, CONF_TEMP_SCALE, CONF_TEMP_STEP,
     CONF_TIMEOUT, DEFAULT_CONTROLLER_NAME, DEFAULT_PORT, DEFAULT_REGISTER,
-    DEFAULT_LIGHT_ADDRESS, DEFAULT_LIGHT_KIND, DEFAULT_SLAVE, DEFAULT_TIMEOUT, DOMAIN,
+    DEFAULT_COVER_DOWN_ADDRESS, DEFAULT_COVER_UP_ADDRESS, DEFAULT_LIGHT_ADDRESS, DEFAULT_LIGHT_KIND, DEFAULT_SWITCH_ADDRESS, DEFAULT_SLAVE, DEFAULT_TIMEOUT, DOMAIN,
     LIGHT_KIND_DIMMABLE, LIGHT_KIND_SWITCHABLE,
 )
 
@@ -127,28 +129,50 @@ class ISYGLTOptionsFlow(OptionsFlowWithReload):
         )
 
     async def async_step_add_switch(self, user_input=None) -> ConfigFlowResult:
+        errors: dict[str, str] = {}
         if user_input is not None:
-            return self._save_entity(CONF_SWITCHES, user_input)
+            try:
+                resolved = resolve_switch_address(user_input[CONF_ISYGLT_ADDRESS])
+            except ISYGLTAddressError:
+                errors[CONF_ISYGLT_ADDRESS] = "invalid_switch_address"
+            else:
+                user_input[CONF_ISYGLT_ADDRESS] = resolved.native_address
+                return self._save_entity(CONF_SWITCHES, user_input)
+
         schema = _entity_base_schema()
         schema.update({
-            vol.Required(CONF_REGISTER): vol.All(vol.Coerce(int), vol.Range(min=0, max=65535)),
-            vol.Required(CONF_OFF_VALUE, default=0): vol.Coerce(int),
-            vol.Required(CONF_ON_VALUE, default=100): vol.Coerce(int),
+            vol.Required(CONF_ISYGLT_ADDRESS, default=DEFAULT_SWITCH_ADDRESS): selector.TextSelector(),
         })
-        return self.async_show_form(step_id="add_switch", data_schema=vol.Schema(schema))
+        return self.async_show_form(
+            step_id="add_switch", data_schema=vol.Schema(schema), errors=errors
+        )
 
     async def async_step_add_cover(self, user_input=None) -> ConfigFlowResult:
+        errors: dict[str, str] = {}
         if user_input is not None:
-            return self._save_entity(CONF_COVERS, user_input)
+            try:
+                up = resolve_cover_address(user_input[CONF_UP_ADDRESS])
+            except ISYGLTAddressError:
+                errors[CONF_UP_ADDRESS] = "invalid_cover_address"
+            else:
+                try:
+                    down = resolve_cover_address(user_input[CONF_DOWN_ADDRESS])
+                except ISYGLTAddressError:
+                    errors[CONF_DOWN_ADDRESS] = "invalid_cover_address"
+                else:
+                    if up.protocol_address == down.protocol_address:
+                        errors[CONF_DOWN_ADDRESS] = "cover_addresses_equal"
+                    else:
+                        user_input[CONF_UP_ADDRESS] = up.native_address
+                        user_input[CONF_DOWN_ADDRESS] = down.native_address
+                        return self._save_entity(CONF_COVERS, user_input)
+
         schema = _entity_base_schema()
         schema.update({
-            vol.Required(CONF_COMMAND_REGISTER): vol.All(vol.Coerce(int), vol.Range(min=0, max=65535)),
-            vol.Required(CONF_POSITION_REGISTER): vol.All(vol.Coerce(int), vol.Range(min=0, max=65535)),
-            vol.Required(CONF_OPEN_VALUE): vol.Coerce(int),
-            vol.Required(CONF_CLOSE_VALUE): vol.Coerce(int),
-            vol.Required(CONF_STOP_VALUE): vol.Coerce(int),
+            vol.Required(CONF_UP_ADDRESS, default=DEFAULT_COVER_UP_ADDRESS): selector.TextSelector(),
+            vol.Required(CONF_DOWN_ADDRESS, default=DEFAULT_COVER_DOWN_ADDRESS): selector.TextSelector(),
         })
-        return self.async_show_form(step_id="add_cover", data_schema=vol.Schema(schema))
+        return self.async_show_form(step_id="add_cover", data_schema=vol.Schema(schema), errors=errors)
 
     async def async_step_add_climate(self, user_input=None) -> ConfigFlowResult:
         if user_input is not None:

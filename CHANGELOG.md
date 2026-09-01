@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.6.0
+- Cover rebuilt around native ISYGLT NE addresses: one for up and one for down.
+- Open/close use a 3-second long press.
+- Stop sends a 200 ms short press to the same direction that Home Assistant last started.
+- Added two Button entities per native Cover for explicit 200 ms up/down short presses.
+- Removed position support from newly configured native Covers because no real position feedback is available.
+- Legacy raw-register Covers remain supported for backwards compatibility.
+
+## 0.5.0
+
+- Switch omgebouwd naar native ISYGLT-adressering.
+- Nieuwe Switches gebruiken automatisch NE (`groep.bit`) en Modbus coils.
+- Voorbeeld: `NE 30.3` wordt Modbus `000235` en protocoladres `234`.
+- Feedback wordt uit dezelfde coil gelezen.
+- Raw Modbus-register en configureerbare 0/100-waarden zijn verwijderd uit de nieuwe Switch-configuratie.
+- Bestaande legacy Switch-configuraties blijven werken.
+- Adresseringstest toegevoegd voor Switch.
+
+
 ## 0.4.4
 
 - Fix Home Assistant 2026.x compatibility for the Cover platform.

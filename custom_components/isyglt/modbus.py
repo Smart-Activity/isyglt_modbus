@@ -128,3 +128,14 @@ class ISYGLTModbusClient:
                 raise ISYGLTModbusError(
                     f"Write failed for slave {slave}, coil {address}"
                 )
+
+
+    async def async_pulse_coil(
+        self, slave: int, address: int, duration: float
+    ) -> None:
+        """Pulse one coil ON and always attempt to return it to OFF."""
+        await self.async_write_coil(slave, address, True)
+        try:
+            await asyncio.sleep(duration)
+        finally:
+            await self.async_write_coil(slave, address, False)

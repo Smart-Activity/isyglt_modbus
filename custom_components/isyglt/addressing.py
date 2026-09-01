@@ -114,3 +114,17 @@ def resolve_light_address(light_kind: str, value: str) -> ISYGLTAddress:
     if light_kind == "switchable":
         return resolve_ne(value)
     raise ISYGLTAddressError(f"Unsupported light kind: {light_kind}")
+
+
+def resolve_switch_address(value: str) -> ISYGLTAddress:
+    """Resolve a Switch address.
+
+    Native ISYGLT Switch entities use NE group.bit addresses, which map to
+    Modbus coils. Example: NE 30.3 -> coil reference 000235 -> PDU address 234.
+    """
+    return resolve_ne(value)
+
+
+def resolve_cover_address(value: str) -> ISYGLTAddress:
+    """Resolve a native ISYGLT Cover direction address (NE group.bit)."""
+    return resolve_ne(value)

@@ -40,3 +40,19 @@ def test_sm() -> None:
     result = module.resolve_sm("204")
     assert result.protocol_address == 203
     assert result.reference_address == "300204"
+
+
+def test_switch_uses_ne_addressing():
+    result = module.resolve_switch_address("30.3")
+    assert result.address_type == "NE"
+    assert result.register_type == "coil"
+    assert result.native_address == "30.3"
+    assert result.reference_address == "000235"
+    assert result.protocol_address == 234
+
+
+def test_cover_ne_address():
+    address = module.resolve_cover_address("20.2")
+    assert address.address_type == "NE"
+    assert address.protocol_address == 153
+    assert address.reference_address == "000154"
