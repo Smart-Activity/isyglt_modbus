@@ -71,17 +71,14 @@
       },
       "add_climate": {
         "title": "Add Climate",
-        "description": "Temperature controller with current temperature and target registers. Scale 10 means for example 215 = 21.5 °C.",
+        "description": "Native ISYGLT Climate: target temperature uses M and measured temperature uses SM. Range is 10–40 °C in 1 °C steps. Enable Airco to configure NE/NA fan and power controls.",
         "data": {
           "name": "Name",
           "area_id": "Home Assistant area",
           "slave": "Slave / Unit ID",
-          "current_temperature_register": "Current temperature register",
-          "target_temperature_register": "Target temperature register",
-          "temperature_scale": "Scale factor",
-          "min_temperature": "Minimum temperature",
-          "max_temperature": "Maximum temperature",
-          "temperature_step": "Temperature step"
+          "target_temperature_address": "ISYGLT M address for target temperature",
+          "current_temperature_address": "ISYGLT SM address for measured temperature",
+          "is_airco": "This is an air conditioner"
         }
       },
       "remove_light": {
@@ -124,6 +121,20 @@
         "data": {
           "entity_uid": "Scene"
         }
+      },
+      "add_climate_airco": {
+        "title": "Configure Airco controls",
+        "description": "Each function uses an NE pushbutton command and an NA for actual feedback. The Climate entity uses NA feedback for fan mode and Airco power state.",
+        "data": {
+          "fan_high_ne": "Fan High — NE",
+          "fan_high_na": "Fan High — NA feedback",
+          "fan_medium_ne": "Fan Medium — NE",
+          "fan_medium_na": "Fan Medium — NA feedback",
+          "fan_low_ne": "Fan Low — NE",
+          "fan_low_na": "Fan Low — NA feedback",
+          "airco_power_ne": "Airco On/Off — NE",
+          "airco_power_na": "Airco On/Off — NA feedback"
+        }
       }
     },
     "abort": {
@@ -139,7 +150,12 @@
       "invalid_cover_address": "Invalid Cover address. Use an NE group.bit address such as 20.1.",
       "cover_addresses_equal": "Up and down must use different NE addresses.",
       "invalid_scene_trigger_address": "Invalid Scene NE address. Use group.bit, for example 1.1.",
-      "invalid_scene_feedback_address": "Invalid Scene NA feedback address. Use group.bit, for example 1.1."
+      "invalid_scene_feedback_address": "Invalid Scene NA feedback address. Use group.bit, for example 1.1.",
+      "invalid_climate_target_address": "Invalid M address. For example, use 20 for M 20.",
+      "invalid_climate_current_address": "Invalid SM address. For example, use 20 for SM 20.",
+      "invalid_climate_ne_address": "Invalid NE address. Use group.bit, for example 10.1.",
+      "invalid_climate_na_address": "Invalid NA address. Use group.bit, for example 10.1.",
+      "duplicate_climate_address": "This address is already used by another Airco function of the same type."
     }
   }
 }

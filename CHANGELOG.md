@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.8.0
+- Native ISYGLT Climate configuration added.
+- Desired temperature uses an M address (holding register); measured temperature uses an SM address (input register / FC04).
+- Native temperature range is 10–40 °C, 1 °C steps, with initial scale 1 (raw 21 = 21 °C).
+- Optional Airco mode adds Fan High, Fan Medium, Fan Low and Airco On/Off, each with NE command and NA feedback.
+- Airco NA feedback is authoritative for HVAC power and fan mode state.
+- Airco Climate exposes Home Assistant fan modes Low/Medium/High and COOL/OFF.
+- Four Airco command Button entities are created automatically on the same Climate device.
+- Existing legacy raw-register Climate configurations remain supported.
+
+
 ## 0.7.0
 - Added native ISYGLT Scene support.
 - Scene activation sends a 200 ms short press to the configured NE address.

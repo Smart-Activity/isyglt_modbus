@@ -19,6 +19,10 @@ from homeassistant.helpers import selector
 from .addressing import (
     ISYGLTAddressError,
     resolve_cover_address,
+    resolve_climate_command_address,
+    resolve_climate_current_address,
+    resolve_climate_feedback_address,
+    resolve_climate_target_address,
     resolve_light_address,
     resolve_scene_feedback_address,
     resolve_scene_trigger_address,
@@ -26,6 +30,9 @@ from .addressing import (
 )
 from .const import (
     CONF_AREA_ID, CONF_CLIMATES, CONF_CLOSE_VALUE, CONF_COMMAND_REGISTER,
+    CONF_TARGET_TEMP_ADDRESS, CONF_CURRENT_TEMP_ADDRESS, CONF_IS_AIRCO,
+    CONF_FAN_HIGH_NE, CONF_FAN_HIGH_NA, CONF_FAN_MEDIUM_NE, CONF_FAN_MEDIUM_NA,
+    CONF_FAN_LOW_NE, CONF_FAN_LOW_NA, CONF_AIRCO_POWER_NE, CONF_AIRCO_POWER_NA,
     CONF_SCENES, CONF_SCENE_FEEDBACK_ADDRESS, CONF_SCENE_TRIGGER_ADDRESS,
     CONF_DOWN_ADDRESS,
     CONF_ISYGLT_ADDRESS, CONF_LIGHT_KIND,
@@ -35,6 +42,9 @@ from .const import (
     CONF_UP_ADDRESS,
     CONF_SWITCHES, CONF_TARGET_TEMP_REGISTER, CONF_TEMP_SCALE, CONF_TEMP_STEP,
     CONF_TIMEOUT, DEFAULT_CONTROLLER_NAME, DEFAULT_PORT, DEFAULT_REGISTER,
+    DEFAULT_CLIMATE_TARGET_ADDRESS, DEFAULT_CLIMATE_CURRENT_ADDRESS,
+    DEFAULT_CLIMATE_MIN_TEMP, DEFAULT_CLIMATE_MAX_TEMP, DEFAULT_CLIMATE_TEMP_STEP,
+    DEFAULT_CLIMATE_TEMP_SCALE,
     DEFAULT_COVER_DOWN_ADDRESS, DEFAULT_COVER_UP_ADDRESS, DEFAULT_LIGHT_ADDRESS, DEFAULT_LIGHT_KIND, DEFAULT_SWITCH_ADDRESS, DEFAULT_SCENE_TRIGGER_ADDRESS, DEFAULT_SCENE_FEEDBACK_ADDRESS, DEFAULT_SLAVE, DEFAULT_TIMEOUT, DOMAIN,
     LIGHT_KIND_DIMMABLE, LIGHT_KIND_SWITCHABLE,
 )
@@ -91,6 +101,10 @@ class ISYGLTConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
 
 class ISYGLTOptionsFlow(OptionsFlowWithReload):
+    def __init__(self) -> None:
+        super().__init__()
+        self._pending_climate: dict[str, Any] | None = None
+
     async def async_step_init(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         menu = ["add_light", "add_switch", "add_cover", "add_climate", "add_scene"]
         for key, step in ((CONF_LIGHTS, "remove_light"), (CONF_SWITCHES, "remove_switch"), (CONF_COVERS, "remove_cover"), (CONF_CLIMATES, "remove_climate"), (CONF_SCENES, "remove_scene")):
@@ -207,18 +221,83 @@ class ISYGLTOptionsFlow(OptionsFlowWithReload):
         return self.async_show_form(step_id="add_scene", data_schema=vol.Schema(schema), errors=errors)
 
     async def async_step_add_climate(self, user_input=None) -> ConfigFlowResult:
+        errors: dict[str, str] = {}
         if user_input is not None:
-            return self._save_entity(CONF_CLIMATES, user_input)
+            try:
+                target = resolve_climate_target_address(user_input[CONF_TARGET_TEMP_ADDRESS])
+            except ISYGLTAddressError:
+                errors[CONF_TARGET_TEMP_ADDRESS] = "invalid_climate_target_address"
+            else:
+                try:
+                    current = resolve_climate_current_address(user_input[CONF_CURRENT_TEMP_ADDRESS])
+                except ISYGLTAddressError:
+                    errors[CONF_CURRENT_TEMP_ADDRESS] = "invalid_climate_current_address"
+                else:
+                    user_input[CONF_TARGET_TEMP_ADDRESS] = target.native_address
+                    user_input[CONF_CURRENT_TEMP_ADDRESS] = current.native_address
+                    # Fixed first native implementation: 10-40 °C, 1 °C steps, raw value == °C.
+                    user_input[CONF_MIN_TEMP] = DEFAULT_CLIMATE_MIN_TEMP
+                    user_input[CONF_MAX_TEMP] = DEFAULT_CLIMATE_MAX_TEMP
+                    user_input[CONF_TEMP_STEP] = DEFAULT_CLIMATE_TEMP_STEP
+                    user_input[CONF_TEMP_SCALE] = DEFAULT_CLIMATE_TEMP_SCALE
+                    if user_input[CONF_IS_AIRCO]:
+                        self._pending_climate = user_input
+                        return await self.async_step_add_climate_airco()
+                    return self._save_entity(CONF_CLIMATES, user_input)
+
         schema = _entity_base_schema()
         schema.update({
-            vol.Required(CONF_CURRENT_TEMP_REGISTER): vol.All(vol.Coerce(int), vol.Range(min=0, max=65535)),
-            vol.Required(CONF_TARGET_TEMP_REGISTER): vol.All(vol.Coerce(int), vol.Range(min=0, max=65535)),
-            vol.Required(CONF_TEMP_SCALE, default=10): vol.All(vol.Coerce(float), vol.Range(min=0.01, max=1000)),
-            vol.Required(CONF_MIN_TEMP, default=5): vol.Coerce(float),
-            vol.Required(CONF_MAX_TEMP, default=35): vol.Coerce(float),
-            vol.Required(CONF_TEMP_STEP, default=0.5): vol.All(vol.Coerce(float), vol.Range(min=0.1, max=10)),
+            vol.Required(CONF_TARGET_TEMP_ADDRESS, default=DEFAULT_CLIMATE_TARGET_ADDRESS): selector.TextSelector(),
+            vol.Required(CONF_CURRENT_TEMP_ADDRESS, default=DEFAULT_CLIMATE_CURRENT_ADDRESS): selector.TextSelector(),
+            vol.Required(CONF_IS_AIRCO, default=False): selector.BooleanSelector(),
         })
-        return self.async_show_form(step_id="add_climate", data_schema=vol.Schema(schema))
+        return self.async_show_form(step_id="add_climate", data_schema=vol.Schema(schema), errors=errors)
+
+    async def async_step_add_climate_airco(self, user_input=None) -> ConfigFlowResult:
+        if self._pending_climate is None:
+            return await self.async_step_add_climate()
+
+        errors: dict[str, str] = {}
+        fields = (
+            (CONF_FAN_HIGH_NE, resolve_climate_command_address, "invalid_climate_ne_address"),
+            (CONF_FAN_HIGH_NA, resolve_climate_feedback_address, "invalid_climate_na_address"),
+            (CONF_FAN_MEDIUM_NE, resolve_climate_command_address, "invalid_climate_ne_address"),
+            (CONF_FAN_MEDIUM_NA, resolve_climate_feedback_address, "invalid_climate_na_address"),
+            (CONF_FAN_LOW_NE, resolve_climate_command_address, "invalid_climate_ne_address"),
+            (CONF_FAN_LOW_NA, resolve_climate_feedback_address, "invalid_climate_na_address"),
+            (CONF_AIRCO_POWER_NE, resolve_climate_command_address, "invalid_climate_ne_address"),
+            (CONF_AIRCO_POWER_NA, resolve_climate_feedback_address, "invalid_climate_na_address"),
+        )
+        if user_input is not None:
+            normalized = dict(user_input)
+            protocol_seen: set[tuple[str, int]] = set()
+            for key, resolver, error_key in fields:
+                try:
+                    resolved = resolver(user_input[key])
+                except ISYGLTAddressError:
+                    errors[key] = error_key
+                    continue
+                normalized[key] = resolved.native_address
+                marker = (resolved.register_type, resolved.protocol_address)
+                if marker in protocol_seen:
+                    errors[key] = "duplicate_climate_address"
+                protocol_seen.add(marker)
+            if not errors:
+                climate = {**self._pending_climate, **normalized}
+                self._pending_climate = None
+                return self._save_entity(CONF_CLIMATES, climate)
+
+        schema = vol.Schema({
+            vol.Required(CONF_FAN_HIGH_NE): selector.TextSelector(),
+            vol.Required(CONF_FAN_HIGH_NA): selector.TextSelector(),
+            vol.Required(CONF_FAN_MEDIUM_NE): selector.TextSelector(),
+            vol.Required(CONF_FAN_MEDIUM_NA): selector.TextSelector(),
+            vol.Required(CONF_FAN_LOW_NE): selector.TextSelector(),
+            vol.Required(CONF_FAN_LOW_NA): selector.TextSelector(),
+            vol.Required(CONF_AIRCO_POWER_NE): selector.TextSelector(),
+            vol.Required(CONF_AIRCO_POWER_NA): selector.TextSelector(),
+        })
+        return self.async_show_form(step_id="add_climate_airco", data_schema=schema, errors=errors)
 
     async def _remove(self, collection: str, step_id: str, user_input, empty_reason: str) -> ConfigFlowResult:
         items = list(self.config_entry.options.get(collection, []))

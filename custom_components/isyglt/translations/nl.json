@@ -71,17 +71,14 @@
       },
       "add_climate": {
         "title": "Climate toevoegen",
-        "description": "Temperatuurregelaar met register voor actuele temperatuur en setpoint. Schaal 10 betekent bijvoorbeeld 215 = 21,5 °C.",
+        "description": "Native ISYGLT Climate: gewenste temperatuur via M, gemeten temperatuur via SM. Bereik is 10–40 °C in stappen van 1 °C. Kies Airco om NE/NA-bediening voor ventilator en aan/uit toe te voegen.",
         "data": {
           "name": "Naam",
           "area_id": "Home Assistant ruimte",
           "slave": "Slave / Unit ID",
-          "current_temperature_register": "Register actuele temperatuur",
-          "target_temperature_register": "Register setpoint",
-          "temperature_scale": "Schaalfactor",
-          "min_temperature": "Minimumtemperatuur",
-          "max_temperature": "Maximumtemperatuur",
-          "temperature_step": "Temperatuurstap"
+          "target_temperature_address": "ISYGLT M-adres gewenste temperatuur",
+          "current_temperature_address": "ISYGLT SM-adres gemeten temperatuur",
+          "is_airco": "Dit is een airco"
         }
       },
       "remove_light": {
@@ -124,6 +121,20 @@
         "data": {
           "entity_uid": "Scene"
         }
+      },
+      "add_climate_airco": {
+        "title": "Airco-bediening instellen",
+        "description": "Elke functie gebruikt een NE als drukknopcommando en een NA als werkelijke feedback. De Climate entity gebruikt de NA-feedback voor de actieve ventilatorstand en Airco aan/uit.",
+        "data": {
+          "fan_high_ne": "Fan High — NE",
+          "fan_high_na": "Fan High — NA feedback",
+          "fan_medium_ne": "Fan Medium — NE",
+          "fan_medium_na": "Fan Medium — NA feedback",
+          "fan_low_ne": "Fan Low — NE",
+          "fan_low_na": "Fan Low — NA feedback",
+          "airco_power_ne": "Airco On/Off — NE",
+          "airco_power_na": "Airco On/Off — NA feedback"
+        }
       }
     },
     "abort": {
@@ -139,7 +150,12 @@
       "invalid_cover_address": "Ongeldig Cover-adres. Gebruik een NE-adres als groep.bit, bijvoorbeeld 20.1.",
       "cover_addresses_equal": "Omhoog en omlaag moeten verschillende NE-adressen gebruiken.",
       "invalid_scene_trigger_address": "Ongeldig Scene NE-adres. Gebruik groep.bit, bijvoorbeeld 1.1.",
-      "invalid_scene_feedback_address": "Ongeldig Scene NA-feedbackadres. Gebruik groep.bit, bijvoorbeeld 1.1."
+      "invalid_scene_feedback_address": "Ongeldig Scene NA-feedbackadres. Gebruik groep.bit, bijvoorbeeld 1.1.",
+      "invalid_climate_target_address": "Ongeldig M-adres. Gebruik bijvoorbeeld 20 voor M 20.",
+      "invalid_climate_current_address": "Ongeldig SM-adres. Gebruik bijvoorbeeld 20 voor SM 20.",
+      "invalid_climate_ne_address": "Ongeldig NE-adres. Gebruik groep.bit, bijvoorbeeld 10.1.",
+      "invalid_climate_na_address": "Ongeldig NA-adres. Gebruik groep.bit, bijvoorbeeld 10.1.",
+      "duplicate_climate_address": "Dit adres wordt al door een andere Airco-functie van hetzelfde type gebruikt."
     }
   }
 }

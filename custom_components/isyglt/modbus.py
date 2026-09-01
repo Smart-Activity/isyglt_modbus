@@ -70,6 +70,25 @@ class ISYGLTModbusClient:
                 )
             return int(result.registers[0])
 
+    async def async_read_input_register(self, slave: int, address: int) -> int:
+        """Read one input register (FC04)."""
+        async with self._lock:
+            await self._ensure_connected()
+            try:
+                result = await self._client.read_input_registers(
+                    address,
+                    count=1,
+                    device_id=slave,
+                )
+            except (ModbusException, OSError) as err:
+                raise ISYGLTModbusError(str(err)) from err
+
+            if result is None or result.isError() or not getattr(result, "registers", None):
+                raise ISYGLTModbusError(
+                    f"Read failed for slave {slave}, input register {address}"
+                )
+            return int(result.registers[0])
+
     async def async_write_holding_register(
         self, slave: int, address: int, value: int
     ) -> None:

@@ -138,3 +138,23 @@ def resolve_scene_trigger_address(value: str) -> ISYGLTAddress:
 def resolve_scene_feedback_address(value: str) -> ISYGLTAddress:
     """Resolve an ISYGLT Scene feedback address (NA group.bit)."""
     return resolve_na(value)
+
+
+def resolve_climate_target_address(value: str | int) -> ISYGLTAddress:
+    """Resolve native Climate target temperature address (M)."""
+    return resolve_m(value)
+
+
+def resolve_climate_current_address(value: str | int) -> ISYGLTAddress:
+    """Resolve native Climate measured temperature address (SM)."""
+    return resolve_sm(value)
+
+
+def resolve_climate_command_address(value: str) -> ISYGLTAddress:
+    """Resolve native Airco command address (NE)."""
+    return resolve_ne(value)
+
+
+def resolve_climate_feedback_address(value: str) -> ISYGLTAddress:
+    """Resolve native Airco feedback address (NA)."""
+    return resolve_na(value)

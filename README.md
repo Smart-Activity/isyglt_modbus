@@ -2,11 +2,11 @@
 
 Custom Home Assistant integration for controlling ISYGLT installations directly over Modbus TCP.
 
-> Development status: active development. Version 0.7.0 adds native ISYGLT Scene activation/storage using NE commands and NA feedback.
+> Development status: active development. Version 0.8.0 adds native ISYGLT Climate support with M/SM temperatures and optional Airco NE/NA controls.
 
 ## HACS installation
 
-Add `https://github.com/Smart-Activity/isyglt_modbus` as a custom HACS repository of type **Integration**. HACS installs the integration directly from `custom_components/isyglt`; no release ZIP asset is required. Create a normal GitHub release/tag (for example `v0.7.0`) after committing the files so HACS can see the new version.
+Add `https://github.com/Smart-Activity/isyglt_modbus` as a custom HACS repository of type **Integration**. HACS installs the integration directly from `custom_components/isyglt`; no release ZIP asset is required. Create a normal GitHub release/tag (for example `v0.8.0`) after committing the files so HACS can see the new version.
 
 ## Architecture
 
@@ -20,6 +20,7 @@ ISYGLT Hoofdcontroller
 ├── Scene
 │   └── Opslaan button
 └── Climate
+    └── Airco (optional): Fan High / Medium / Low / On-Off buttons
 ```
 
 ## Native ISYGLT addressing
@@ -181,3 +182,21 @@ Bestaande Switch entities uit oudere versies die met een raw holding register zi
 Native Covers use two ISYGLT NE addresses: one for **Omhoog** and one for **Omlaag**. Home Assistant Open/Close sends a 3-second long press. Stop sends a 200 ms short press to the same direction that Home Assistant last started. Each Cover also creates two Button entities for explicit 200 ms short presses. Native Covers intentionally expose no position percentage because the installation has no real position feedback.
 
 Example: Omhoog `NE 20.1`, Omlaag `NE 20.2`.
+
+## Native Climate (v0.8.0)
+
+A new Climate is configured using native ISYGLT addressing:
+
+- Desired temperature: **M** (read/write holding register)
+- Measured temperature: **SM** (read-only input register)
+- Initial temperature interpretation: **raw value equals °C** (for example M=21 means 21 °C)
+- Setpoint range: **10–40 °C**, step **1 °C**
+
+When **Airco** is enabled, configure four command/feedback pairs:
+
+- Fan High: NE command + NA feedback
+- Fan Medium: NE command + NA feedback
+- Fan Low: NE command + NA feedback
+- Airco On/Off: NE command + NA feedback
+
+NE commands are short 200 ms pulses. NA inputs are authoritative feedback. Home Assistant exposes COOL/OFF and Low/Medium/High fan modes on the Climate entity, plus four matching command Button entities on the same device.

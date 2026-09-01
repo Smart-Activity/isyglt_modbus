@@ -72,3 +72,31 @@ def test_scene_feedback_uses_na():
     assert address.register_type == "discrete_input"
     assert address.protocol_address == 17
     assert address.reference_address == "100018"
+
+
+def test_climate_target_uses_m():
+    address = module.resolve_climate_target_address("21")
+    assert address.address_type == "M"
+    assert address.register_type == "holding_register"
+    assert address.protocol_address == 20
+    assert address.reference_address == "400021"
+
+
+def test_climate_current_uses_sm():
+    address = module.resolve_climate_current_address("21")
+    assert address.address_type == "SM"
+    assert address.register_type == "input_register"
+    assert address.protocol_address == 20
+    assert address.reference_address == "300021"
+
+
+def test_climate_command_uses_ne():
+    address = module.resolve_climate_command_address("10.4")
+    assert address.address_type == "NE"
+    assert address.protocol_address == 75
+
+
+def test_climate_feedback_uses_na():
+    address = module.resolve_climate_feedback_address("10.4")
+    assert address.address_type == "NA"
+    assert address.protocol_address == 75
