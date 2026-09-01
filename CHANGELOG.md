@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.4
+
+- Fix Home Assistant 2026.x compatibility for the Cover platform.
+- Import `ATTR_POSITION` from `homeassistant.components.cover` instead of the removed `homeassistant.const` location.
+- Prevents the full ISYGLT config entry from failing during platform import.
+
 ## v0.4.3
 
 - Simplified HACS installation to use the repository contents directly.

@@ -5,9 +5,9 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from homeassistant.components.cover import CoverEntity, CoverEntityFeature
+from homeassistant.components.cover import ATTR_POSITION, CoverEntity, CoverEntityFeature
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import ATTR_POSITION, CONF_NAME
+from homeassistant.const import CONF_NAME
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import area_registry as ar
