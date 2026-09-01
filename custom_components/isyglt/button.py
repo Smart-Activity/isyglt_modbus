@@ -1,4 +1,4 @@
-"""Short-press buttons for native ISYGLT covers."""
+"""Button entities for native ISYGLT covers and scene storage."""
 
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ from homeassistant.helpers import area_registry as ar
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from . import ISYGLTRuntimeData
-from .addressing import resolve_cover_address
+from .addressing import resolve_cover_address, resolve_scene_trigger_address
 from .const import (
     CONF_AREA_ID,
     CONF_COVERS,
@@ -21,7 +21,10 @@ from .const import (
     CONF_ENTITY_UID,
     CONF_SLAVE,
     CONF_UP_ADDRESS,
+    CONF_SCENES,
+    CONF_SCENE_TRIGGER_ADDRESS,
     COVER_SHORT_PRESS_SECONDS,
+    SCENE_STORE_PRESS_SECONDS,
     DOMAIN,
 )
 from .entity import ISYGLTEntity
@@ -35,7 +38,7 @@ async def async_setup_entry(
 ) -> None:
     runtime_data: ISYGLTRuntimeData = entry.runtime_data
     area_registry = ar.async_get(hass)
-    entities: list[ISYGLTCoverShortPressButton] = []
+    entities: list[ButtonEntity] = []
     for config in entry.options.get(CONF_COVERS, []):
         if CONF_UP_ADDRESS not in config or CONF_DOWN_ADDRESS not in config:
             continue
@@ -45,6 +48,11 @@ async def async_setup_entry(
             ISYGLTCoverShortPressButton(runtime_data, entry, config, area_name, "up"),
             ISYGLTCoverShortPressButton(runtime_data, entry, config, area_name, "down"),
         ])
+    for config in entry.options.get(CONF_SCENES, []):
+        area = area_registry.async_get_area(config.get(CONF_AREA_ID))
+        area_name = area.name if area else None
+        entities.append(ISYGLTSceneStoreButton(runtime_data, entry, config, area_name))
+
     async_add_entities(entities)
 
 
@@ -88,4 +96,44 @@ class ISYGLTCoverShortPressButton(ISYGLTEntity, ButtonEntity):
         except ISYGLTModbusError as err:
             raise HomeAssistantError(
                 f"ISYGLT short press failed for {self._attr_name}: {err}"
+            ) from err
+
+
+class ISYGLTSceneStoreButton(ISYGLTEntity, ButtonEntity):
+    """Store the current ISYGLT state in a preset using a 5-second NE press."""
+
+    _attr_should_poll = False
+
+    def __init__(self, runtime_data, entry, config, area_name) -> None:
+        super().__init__(runtime_data)
+        self._entry = entry
+        self._config = config
+        self._area_name = area_name
+        self._trigger = resolve_scene_trigger_address(config[CONF_SCENE_TRIGGER_ADDRESS])
+        self._attr_name = f"{config[CONF_NAME]} Opslaan"
+        self._attr_unique_id = f"{entry.entry_id}_{config[CONF_ENTITY_UID]}_store"
+
+    @property
+    def device_info(self) -> dict[str, Any]:
+        info = {
+            "identifiers": {(DOMAIN, f"scene_{self._entry.entry_id}_{self._config[CONF_ENTITY_UID]}")},
+            "name": self._config[CONF_NAME],
+            "manufacturer": "ISYGLT",
+            "model": "ISYGLT NE/NA scene",
+            "via_device_id": self._runtime_data.controller_device_id,
+        }
+        if self._area_name:
+            info["suggested_area"] = self._area_name
+        return info
+
+    async def async_press(self) -> None:
+        try:
+            await self._runtime_data.client.async_pulse_coil(
+                self._config[CONF_SLAVE],
+                self._trigger.protocol_address,
+                SCENE_STORE_PRESS_SECONDS,
+            )
+        except ISYGLTModbusError as err:
+            raise HomeAssistantError(
+                f"ISYGLT scene store failed for {self._attr_name}: {err}"
             ) from err

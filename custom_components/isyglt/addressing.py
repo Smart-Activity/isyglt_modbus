@@ -128,3 +128,13 @@ def resolve_switch_address(value: str) -> ISYGLTAddress:
 def resolve_cover_address(value: str) -> ISYGLTAddress:
     """Resolve a native ISYGLT Cover direction address (NE group.bit)."""
     return resolve_ne(value)
+
+
+def resolve_scene_trigger_address(value: str) -> ISYGLTAddress:
+    """Resolve an ISYGLT Scene trigger address (NE group.bit)."""
+    return resolve_ne(value)
+
+
+def resolve_scene_feedback_address(value: str) -> ISYGLTAddress:
+    """Resolve an ISYGLT Scene feedback address (NA group.bit)."""
+    return resolve_na(value)

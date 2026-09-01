@@ -56,3 +56,19 @@ def test_cover_ne_address():
     assert address.address_type == "NE"
     assert address.protocol_address == 153
     assert address.reference_address == "000154"
+
+
+def test_scene_trigger_uses_ne():
+    address = module.resolve_scene_trigger_address("3.2")
+    assert address.address_type == "NE"
+    assert address.register_type == "coil"
+    assert address.protocol_address == 17
+    assert address.reference_address == "000018"
+
+
+def test_scene_feedback_uses_na():
+    address = module.resolve_scene_feedback_address("3.2")
+    assert address.address_type == "NA"
+    assert address.register_type == "discrete_input"
+    assert address.protocol_address == 17
+    assert address.reference_address == "100018"

@@ -32,7 +32,9 @@
           "remove_light": "Remove Light",
           "remove_switch": "Remove Switch",
           "remove_cover": "Remove Cover",
-          "remove_climate": "Remove Climate"
+          "remove_climate": "Remove Climate",
+          "add_scene": "Add Scene",
+          "remove_scene": "Remove Scene"
         }
       },
       "add_light": {
@@ -105,19 +107,39 @@
         "data": {
           "entity_uid": "Climate"
         }
+      },
+      "add_scene": {
+        "title": "Add Scene",
+        "description": "ISYGLT scene/preset: a short pulse on NE activates the scene and NA reports the active scene. The linked Store button holds the same NE address for 5 seconds to store the current state in ISYGLT.",
+        "data": {
+          "name": "Name",
+          "area_id": "Home Assistant area",
+          "slave": "Slave / Unit ID",
+          "scene_trigger_address": "ISYGLT NE scene address",
+          "scene_feedback_address": "ISYGLT NA feedback address"
+        }
+      },
+      "remove_scene": {
+        "title": "Remove Scene",
+        "data": {
+          "entity_uid": "Scene"
+        }
       }
     },
     "abort": {
       "no_lights": "No Lights are configured.",
       "no_switches": "No Switches are configured.",
       "no_covers": "No Covers are configured.",
-      "no_climates": "No Climate entities are configured."
+      "no_climates": "No Climate entities are configured.",
+      "no_scenes": "No Scenes are configured."
     },
     "error": {
       "invalid_isyglt_address": "Invalid ISYGLT address. For Dimmable use for example 8 (M 8); for Switched use for example 30.3 (NE 30.3).",
       "invalid_switch_address": "Invalid Switch address. Use an NE group.bit address such as 1.1 or 30.3.",
       "invalid_cover_address": "Invalid Cover address. Use an NE group.bit address such as 20.1.",
-      "cover_addresses_equal": "Up and down must use different NE addresses."
+      "cover_addresses_equal": "Up and down must use different NE addresses.",
+      "invalid_scene_trigger_address": "Invalid Scene NE address. Use group.bit, for example 1.1.",
+      "invalid_scene_feedback_address": "Invalid Scene NA feedback address. Use group.bit, for example 1.1."
     }
   }
 }

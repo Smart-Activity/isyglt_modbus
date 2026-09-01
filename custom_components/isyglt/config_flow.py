@@ -16,9 +16,17 @@ from homeassistant.const import CONF_HOST, CONF_NAME, CONF_PORT
 from homeassistant.core import callback
 from homeassistant.helpers import selector
 
-from .addressing import ISYGLTAddressError, resolve_cover_address, resolve_light_address, resolve_switch_address
+from .addressing import (
+    ISYGLTAddressError,
+    resolve_cover_address,
+    resolve_light_address,
+    resolve_scene_feedback_address,
+    resolve_scene_trigger_address,
+    resolve_switch_address,
+)
 from .const import (
     CONF_AREA_ID, CONF_CLIMATES, CONF_CLOSE_VALUE, CONF_COMMAND_REGISTER,
+    CONF_SCENES, CONF_SCENE_FEEDBACK_ADDRESS, CONF_SCENE_TRIGGER_ADDRESS,
     CONF_DOWN_ADDRESS,
     CONF_ISYGLT_ADDRESS, CONF_LIGHT_KIND,
     CONF_COVERS, CONF_CURRENT_TEMP_REGISTER, CONF_ENTITY_UID, CONF_LIGHTS,
@@ -27,7 +35,7 @@ from .const import (
     CONF_UP_ADDRESS,
     CONF_SWITCHES, CONF_TARGET_TEMP_REGISTER, CONF_TEMP_SCALE, CONF_TEMP_STEP,
     CONF_TIMEOUT, DEFAULT_CONTROLLER_NAME, DEFAULT_PORT, DEFAULT_REGISTER,
-    DEFAULT_COVER_DOWN_ADDRESS, DEFAULT_COVER_UP_ADDRESS, DEFAULT_LIGHT_ADDRESS, DEFAULT_LIGHT_KIND, DEFAULT_SWITCH_ADDRESS, DEFAULT_SLAVE, DEFAULT_TIMEOUT, DOMAIN,
+    DEFAULT_COVER_DOWN_ADDRESS, DEFAULT_COVER_UP_ADDRESS, DEFAULT_LIGHT_ADDRESS, DEFAULT_LIGHT_KIND, DEFAULT_SWITCH_ADDRESS, DEFAULT_SCENE_TRIGGER_ADDRESS, DEFAULT_SCENE_FEEDBACK_ADDRESS, DEFAULT_SLAVE, DEFAULT_TIMEOUT, DOMAIN,
     LIGHT_KIND_DIMMABLE, LIGHT_KIND_SWITCHABLE,
 )
 
@@ -65,7 +73,7 @@ class ISYGLTConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 return self.async_create_entry(
                     title=user_input[CONF_NAME],
                     data={CONF_HOST: host, CONF_PORT: port, CONF_TIMEOUT: timeout},
-                    options={CONF_LIGHTS: [], CONF_SWITCHES: [], CONF_COVERS: [], CONF_CLIMATES: []},
+                    options={CONF_LIGHTS: [], CONF_SWITCHES: [], CONF_COVERS: [], CONF_CLIMATES: [], CONF_SCENES: []},
                 )
             errors["base"] = "cannot_connect"
         schema = vol.Schema({
@@ -84,8 +92,8 @@ class ISYGLTConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
 class ISYGLTOptionsFlow(OptionsFlowWithReload):
     async def async_step_init(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
-        menu = ["add_light", "add_switch", "add_cover", "add_climate"]
-        for key, step in ((CONF_LIGHTS, "remove_light"), (CONF_SWITCHES, "remove_switch"), (CONF_COVERS, "remove_cover"), (CONF_CLIMATES, "remove_climate")):
+        menu = ["add_light", "add_switch", "add_cover", "add_climate", "add_scene"]
+        for key, step in ((CONF_LIGHTS, "remove_light"), (CONF_SWITCHES, "remove_switch"), (CONF_COVERS, "remove_cover"), (CONF_CLIMATES, "remove_climate"), (CONF_SCENES, "remove_scene")):
             if self.config_entry.options.get(key):
                 menu.append(step)
         return self.async_show_menu(step_id="init", menu_options=menu)
@@ -174,6 +182,30 @@ class ISYGLTOptionsFlow(OptionsFlowWithReload):
         })
         return self.async_show_form(step_id="add_cover", data_schema=vol.Schema(schema), errors=errors)
 
+    async def async_step_add_scene(self, user_input=None) -> ConfigFlowResult:
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            try:
+                trigger = resolve_scene_trigger_address(user_input[CONF_SCENE_TRIGGER_ADDRESS])
+            except ISYGLTAddressError:
+                errors[CONF_SCENE_TRIGGER_ADDRESS] = "invalid_scene_trigger_address"
+            else:
+                try:
+                    feedback = resolve_scene_feedback_address(user_input[CONF_SCENE_FEEDBACK_ADDRESS])
+                except ISYGLTAddressError:
+                    errors[CONF_SCENE_FEEDBACK_ADDRESS] = "invalid_scene_feedback_address"
+                else:
+                    user_input[CONF_SCENE_TRIGGER_ADDRESS] = trigger.native_address
+                    user_input[CONF_SCENE_FEEDBACK_ADDRESS] = feedback.native_address
+                    return self._save_entity(CONF_SCENES, user_input)
+
+        schema = _entity_base_schema()
+        schema.update({
+            vol.Required(CONF_SCENE_TRIGGER_ADDRESS, default=DEFAULT_SCENE_TRIGGER_ADDRESS): selector.TextSelector(),
+            vol.Required(CONF_SCENE_FEEDBACK_ADDRESS, default=DEFAULT_SCENE_FEEDBACK_ADDRESS): selector.TextSelector(),
+        })
+        return self.async_show_form(step_id="add_scene", data_schema=vol.Schema(schema), errors=errors)
+
     async def async_step_add_climate(self, user_input=None) -> ConfigFlowResult:
         if user_input is not None:
             return self._save_entity(CONF_CLIMATES, user_input)
@@ -213,3 +245,6 @@ class ISYGLTOptionsFlow(OptionsFlowWithReload):
 
     async def async_step_remove_climate(self, user_input=None):
         return await self._remove(CONF_CLIMATES, "remove_climate", user_input, "no_climates")
+
+    async def async_step_remove_scene(self, user_input=None):
+        return await self._remove(CONF_SCENES, "remove_scene", user_input, "no_scenes")

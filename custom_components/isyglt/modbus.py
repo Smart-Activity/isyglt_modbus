@@ -109,6 +109,26 @@ class ISYGLTModbusClient:
                 )
             return bool(result.bits[0])
 
+
+    async def async_read_discrete_input(self, slave: int, address: int) -> bool:
+        """Read one discrete input (FC02)."""
+        async with self._lock:
+            await self._ensure_connected()
+            try:
+                result = await self._client.read_discrete_inputs(
+                    address,
+                    count=1,
+                    device_id=slave,
+                )
+            except (ModbusException, OSError) as err:
+                raise ISYGLTModbusError(str(err)) from err
+
+            if result is None or result.isError() or not getattr(result, "bits", None):
+                raise ISYGLTModbusError(
+                    f"Read failed for slave {slave}, discrete input {address}"
+                )
+            return bool(result.bits[0])
+
     async def async_write_coil(
         self, slave: int, address: int, value: bool
     ) -> None:

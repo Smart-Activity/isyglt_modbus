@@ -2,11 +2,11 @@
 
 Custom Home Assistant integration for controlling ISYGLT installations directly over Modbus TCP.
 
-> Development status: active development. Version 0.4.3 uses direct HACS repository installation and includes native ISYGLT addressing with automatic Light mapping.
+> Development status: active development. Version 0.7.0 adds native ISYGLT Scene activation/storage using NE commands and NA feedback.
 
 ## HACS installation
 
-Add `https://github.com/Smart-Activity/isyglt_modbus` as a custom HACS repository of type **Integration**. HACS installs the integration directly from `custom_components/isyglt`; no release ZIP asset is required. Create a normal GitHub release/tag (for example `v0.4.3`) after committing the files so HACS can see the new version.
+Add `https://github.com/Smart-Activity/isyglt_modbus` as a custom HACS repository of type **Integration**. HACS installs the integration directly from `custom_components/isyglt`; no release ZIP asset is required. Create a normal GitHub release/tag (for example `v0.7.0`) after committing the files so HACS can see the new version.
 
 ## Architecture
 
@@ -15,9 +15,11 @@ One ISYGLT main controller is configured per Modbus TCP endpoint. Multiple Modbu
 ```text
 ISYGLT Hoofdcontroller
 ├── Light
+├── Switch
 ├── Cover
-├── Climate
-└── Switch
+├── Scene
+│   └── Opslaan button
+└── Climate
 ```
 
 ## Native ISYGLT addressing
@@ -48,7 +50,7 @@ M 1     -> 400001 -> protocol holding register 0
 M 8     -> 400008 -> protocol holding register 7
 ```
 
-The user configures ISYGLT addresses; raw Modbus offsets are hidden for new Light entities.
+The user configures ISYGLT addresses; raw Modbus offsets are hidden for native Light, Switch, Cover and Scene entities.
 
 ## Light
 
@@ -74,9 +76,38 @@ When adding a Light, select one of two types:
 
 Existing v0.3 Light entries keep their old raw holding-register behavior for backward compatibility. Re-create them through the v0.4 UI when you want to move them to native ISYGLT addressing.
 
-## Switch, Cover and Climate
+## Switch
 
-These platforms are still present from v0.3 and currently use their generic register configuration. They will be migrated to the same NE/NA/SM/M addressing layer as their exact ISYGLT semantics are confirmed.
+New Switch entities use a native **NE** address and read/write the corresponding Modbus coil. Legacy raw-register Switch entries remain supported for upgrades.
+
+## Cover
+
+New Cover entities use two native **NE** addresses: one for up and one for down. Open/close use a 3-second long press. Stop gives a 200 ms short press to the direction last started by Home Assistant. Two additional short-press Button entities are created automatically. No position is exposed because there is no real position feedback.
+
+## Scene
+
+A native ISYGLT Scene uses one **NE** address for the preset button and one **NA** address for feedback.
+
+- Activate Scene: 200 ms pulse on NE.
+- Feedback: read the configured NA discrete input.
+- Store current preset: the automatically created `Opslaan` Button holds the same NE address for 5 seconds.
+- Home Assistant Scene entities are stateless by design; the NA feedback is used to record the scene activation timestamp and is also exposed as a diagnostic state attribute.
+
+Example:
+
+```text
+Scene: Woonkamer sfeer 1
+NE: 1.1
+NA feedback: 1.1
+
+Activate -> NE 1.1 ON for 200 ms -> OFF
+Store    -> NE 1.1 ON for 5 s    -> OFF
+Feedback -> NA 1.1
+```
+
+## Climate
+
+Climate is still the earlier generic register implementation. It will be migrated to native ISYGLT temperature/setpoint semantics after the exact scaling and addresses have been confirmed.
 
 ## Installation
 
@@ -112,7 +143,7 @@ Restart Home Assistant and add **ISYGLT** through **Settings → Devices & servi
 
 ## GitHub releases
 
-Pushing a version tag automatically validates the source, creates `isyglt.zip` and publishes it as a GitHub Release asset.
+HACS installs directly from the repository. Publish a normal version tag/release after committing the new version.
 
 ```bash
 git add .

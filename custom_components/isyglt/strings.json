@@ -32,7 +32,9 @@
           "remove_light": "Light verwijderen",
           "remove_switch": "Switch verwijderen",
           "remove_cover": "Cover verwijderen",
-          "remove_climate": "Climate verwijderen"
+          "remove_climate": "Climate verwijderen",
+          "add_scene": "Scene toevoegen",
+          "remove_scene": "Scene verwijderen"
         }
       },
       "add_light": {
@@ -105,19 +107,39 @@
         "data": {
           "entity_uid": "Climate"
         }
+      },
+      "add_scene": {
+        "title": "Scene toevoegen",
+        "description": "ISYGLT scene/preset: korte puls op NE activeert de scene, NA geeft de actieve scene terug. De gekoppelde Opslaan-button houdt hetzelfde NE-adres 5 seconden actief om de huidige stand in ISYGLT op te slaan.",
+        "data": {
+          "name": "Naam",
+          "area_id": "Home Assistant ruimte",
+          "slave": "Slave / Unit ID",
+          "scene_trigger_address": "ISYGLT NE-adres scene",
+          "scene_feedback_address": "ISYGLT NA-feedbackadres"
+        }
+      },
+      "remove_scene": {
+        "title": "Scene verwijderen",
+        "data": {
+          "entity_uid": "Scene"
+        }
       }
     },
     "abort": {
       "no_lights": "Er zijn geen Lights geconfigureerd.",
       "no_switches": "Er zijn geen Switches geconfigureerd.",
       "no_covers": "Er zijn geen Covers geconfigureerd.",
-      "no_climates": "Er zijn geen Climate entities geconfigureerd."
+      "no_climates": "Er zijn geen Climate entities geconfigureerd.",
+      "no_scenes": "Er zijn geen Scenes geconfigureerd."
     },
     "error": {
       "invalid_isyglt_address": "Ongeldig ISYGLT-adres. Gebruik voor Dimbaar bijvoorbeeld 8 (M 8) en voor Schakelbaar bijvoorbeeld 30.3 (NE 30.3).",
       "invalid_switch_address": "Ongeldig Switch-adres. Gebruik een NE-adres als groep.bit, bijvoorbeeld 1.1 of 30.3.",
       "invalid_cover_address": "Ongeldig Cover-adres. Gebruik een NE-adres als groep.bit, bijvoorbeeld 20.1.",
-      "cover_addresses_equal": "Omhoog en omlaag moeten verschillende NE-adressen gebruiken."
+      "cover_addresses_equal": "Omhoog en omlaag moeten verschillende NE-adressen gebruiken.",
+      "invalid_scene_trigger_address": "Ongeldig Scene NE-adres. Gebruik groep.bit, bijvoorbeeld 1.1.",
+      "invalid_scene_feedback_address": "Ongeldig Scene NA-feedbackadres. Gebruik groep.bit, bijvoorbeeld 1.1."
     }
   }
 }

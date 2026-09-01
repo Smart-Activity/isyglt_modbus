@@ -1,7 +1,7 @@
 """Constants for the ISYGLT integration."""
 
 DOMAIN = "isyglt"
-PLATFORMS = ["light", "switch", "cover", "button", "climate"]
+PLATFORMS = ["light", "switch", "cover", "button", "climate", "scene"]
 
 CONF_CONTROLLER_NAME = "controller_name"
 CONF_TIMEOUT = "timeout"
@@ -9,6 +9,7 @@ CONF_LIGHTS = "lights"
 CONF_SWITCHES = "switches"
 CONF_COVERS = "covers"
 CONF_CLIMATES = "climates"
+CONF_SCENES = "scenes"
 CONF_AREA_ID = "area_id"
 CONF_SLAVE = "slave"
 CONF_REGISTER = "register"  # Legacy v0.3 raw Modbus register field.
@@ -21,6 +22,8 @@ CONF_COMMAND_REGISTER = "command_register"
 CONF_POSITION_REGISTER = "position_register"
 CONF_UP_ADDRESS = "up_address"
 CONF_DOWN_ADDRESS = "down_address"
+CONF_SCENE_TRIGGER_ADDRESS = "scene_trigger_address"
+CONF_SCENE_FEEDBACK_ADDRESS = "scene_feedback_address"
 CONF_OPEN_VALUE = "open_value"
 CONF_CLOSE_VALUE = "close_value"
 CONF_STOP_VALUE = "stop_value"
@@ -47,6 +50,10 @@ DEFAULT_COVER_UP_ADDRESS = "1.1"
 DEFAULT_COVER_DOWN_ADDRESS = "1.2"
 COVER_SHORT_PRESS_SECONDS = 0.2
 COVER_LONG_PRESS_SECONDS = 3.0
+SCENE_ACTIVATE_PRESS_SECONDS = 0.2
+SCENE_STORE_PRESS_SECONDS = 5.0
+DEFAULT_SCENE_TRIGGER_ADDRESS = "1.1"
+DEFAULT_SCENE_FEEDBACK_ADDRESS = "1.1"
 
 MODBUS_MIN = 0
 MODBUS_MAX = 100

@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.7.0
+- Added native ISYGLT Scene support.
+- Scene activation sends a 200 ms short press to the configured NE address.
+- Added NA discrete-input feedback for scene activation/status.
+- Home Assistant records the Scene activation timestamp when the configured NA feedback becomes active.
+- Added one linked `Opslaan` Button entity per Scene.
+- The Store button holds the same NE address active for 5 seconds so ISYGLT stores the current scene/preset.
+- Added Modbus FC02 discrete-input reads for NA feedback.
+- Added native Scene NE/NA address validation and address mapping tests.
+
+
 ## 0.6.0
 - Cover rebuilt around native ISYGLT NE addresses: one for up and one for down.
 - Open/close use a 3-second long press.
