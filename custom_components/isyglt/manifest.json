@@ -1,0 +1,15 @@
+{
+  "domain": "isyglt",
+  "name": "ISYGLT",
+  "codeowners": [
+    "@Smart-Activity"
+  ],
+  "config_flow": true,
+  "documentation": "https://github.com/Smart-Activity/isyglt_modbus",
+  "issue_tracker": "https://github.com/Smart-Activity/isyglt_modbus/issues",
+  "iot_class": "local_polling",
+  "requirements": [
+    "pymodbus>=3.11.0,<4.0.0"
+  ],
+  "version": "0.4.3"
+}
