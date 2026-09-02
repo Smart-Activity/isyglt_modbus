@@ -1,12 +1,14 @@
 # ISYGLT Modbus for Home Assistant
 
+> **v0.8.1:** verwijderen van een geconfigureerd ISYGLT-apparaat ruimt nu ook het Home Assistant apparatenregister op. Bestaande verweesde apparaten uit oudere versies worden bij het laden automatisch verwijderd.
+
 Custom Home Assistant integration for controlling ISYGLT installations directly over Modbus TCP.
 
-> Development status: active development. Version 0.8.0 adds native ISYGLT Climate support with M/SM temperatures and optional Airco NE/NA controls.
+> Development status: active development. Version 0.8.1 adds reliable Home Assistant device-registry cleanup on top of the native Climate support from v0.8.0.
 
 ## HACS installation
 
-Add `https://github.com/Smart-Activity/isyglt_modbus` as a custom HACS repository of type **Integration**. HACS installs the integration directly from `custom_components/isyglt`; no release ZIP asset is required. Create a normal GitHub release/tag (for example `v0.8.0`) after committing the files so HACS can see the new version.
+Add `https://github.com/Smart-Activity/isyglt_modbus` as a custom HACS repository of type **Integration**. HACS installs the integration directly from `custom_components/isyglt`; no release ZIP asset is required. Create a normal GitHub release/tag (for example `v0.8.1`) after committing the files so HACS can see the new version.
 
 ## Architecture
 
@@ -109,6 +111,14 @@ Feedback -> NA 1.1
 ## Climate
 
 Climate is still the earlier generic register implementation. It will be migrated to native ISYGLT temperature/setpoint semantics after the exact scaling and addresses have been confirmed.
+
+## Polling interval (v0.8.2)
+
+Each ISYGLT main controller now has its own polling interval. The default is **5.0 seconds** and the value can be changed later through **Settings → Devices & services → ISYGLT → Configure → Hoofdcontroller instellingen**.
+
+The field is freely editable between **0.1 and 3600 seconds** (0.1-second steps). The interval controls how often readable status values are requested from the controller for Lights, Switches, Scenes, Climate and legacy feedback-based Covers. Native Covers and command Buttons are not polled because they do not expose a readable feedback state.
+
+A very short interval creates more Modbus TCP traffic. Requests are serialized by the integration, so one controller is never sent overlapping Modbus requests.
 
 ## Installation
 

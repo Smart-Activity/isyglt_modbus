@@ -79,6 +79,7 @@ class ISYGLTCoverShortPressButton(ISYGLTEntity, ButtonEntity):
     """A 200 ms pushbutton pulse for one cover direction."""
 
     _attr_should_poll = False
+    _isyglt_periodic_update = False
 
     def __init__(self, runtime_data, entry, config, area_name, direction: str) -> None:
         super().__init__(runtime_data)
@@ -122,6 +123,7 @@ class ISYGLTSceneStoreButton(ISYGLTEntity, ButtonEntity):
     """Store the current ISYGLT state in a preset using a 5-second NE press."""
 
     _attr_should_poll = False
+    _isyglt_periodic_update = False
 
     def __init__(self, runtime_data, entry, config, area_name) -> None:
         super().__init__(runtime_data)
@@ -162,6 +164,7 @@ class ISYGLTAircoCommandButton(ISYGLTEntity, ButtonEntity):
     """Short-press an Airco NE command; Climate NA feedback remains authoritative."""
 
     _attr_should_poll = False
+    _isyglt_periodic_update = False
 
     def __init__(self, runtime_data, entry, config, area_name, address_key: str, label: str, uid_suffix: str) -> None:
         super().__init__(runtime_data)

@@ -9,7 +9,8 @@
           "name": "Name",
           "host": "Host / IP address",
           "port": "TCP port",
-          "timeout": "Timeout (seconds)"
+          "timeout": "Timeout (seconds)",
+          "scan_interval": "Polling interval (seconds)"
         }
       }
     },
@@ -25,6 +26,7 @@
       "init": {
         "title": "Configure ISYGLT",
         "menu_options": {
+          "controller_settings": "Controller settings",
           "add_light": "Add Light",
           "add_switch": "Add Switch",
           "add_cover": "Add Cover",
@@ -134,6 +136,13 @@
           "fan_low_na": "Fan Low — NA feedback",
           "airco_power_ne": "Airco On/Off — NE",
           "airco_power_na": "Airco On/Off — NA feedback"
+        }
+      },
+      "controller_settings": {
+        "title": "Controller settings",
+        "description": "Set how often Home Assistant reads status values from this ISYGLT controller. Minimum is 0.1 second. Changing this setting reloads the integration.",
+        "data": {
+          "scan_interval": "Polling interval (seconds)"
         }
       }
     },

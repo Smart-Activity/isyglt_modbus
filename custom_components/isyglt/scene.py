@@ -66,8 +66,6 @@ async def async_setup_entry(
 class ISYGLTScene(ISYGLTEntity, BaseScene):
     """Scene activated by NE short press, confirmed by NA feedback."""
 
-    _attr_should_poll = True
-
     def __init__(self, runtime_data, entry, config, area_name) -> None:
         super().__init__(runtime_data)
         self._entry = entry

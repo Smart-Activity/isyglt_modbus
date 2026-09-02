@@ -14,6 +14,7 @@ from homeassistant import config_entries
 from homeassistant.config_entries import ConfigEntry, ConfigFlowResult, OptionsFlowWithReload
 from homeassistant.const import CONF_HOST, CONF_NAME, CONF_PORT
 from homeassistant.core import callback
+from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import selector
 
 from .addressing import (
@@ -41,10 +42,10 @@ from .const import (
     CONF_POSITION_REGISTER, CONF_REGISTER, CONF_SLAVE, CONF_STOP_VALUE,
     CONF_UP_ADDRESS,
     CONF_SWITCHES, CONF_TARGET_TEMP_REGISTER, CONF_TEMP_SCALE, CONF_TEMP_STEP,
-    CONF_TIMEOUT, DEFAULT_CONTROLLER_NAME, DEFAULT_PORT, DEFAULT_REGISTER,
+    CONF_TIMEOUT, CONF_SCAN_INTERVAL, DEFAULT_CONTROLLER_NAME, DEFAULT_PORT, DEFAULT_REGISTER,
     DEFAULT_CLIMATE_TARGET_ADDRESS, DEFAULT_CLIMATE_CURRENT_ADDRESS,
     DEFAULT_CLIMATE_MIN_TEMP, DEFAULT_CLIMATE_MAX_TEMP, DEFAULT_CLIMATE_TEMP_STEP,
-    DEFAULT_CLIMATE_TEMP_SCALE,
+    DEFAULT_CLIMATE_TEMP_SCALE, DEFAULT_SCAN_INTERVAL, MIN_SCAN_INTERVAL, MAX_SCAN_INTERVAL,
     DEFAULT_COVER_DOWN_ADDRESS, DEFAULT_COVER_UP_ADDRESS, DEFAULT_LIGHT_ADDRESS, DEFAULT_LIGHT_KIND, DEFAULT_SWITCH_ADDRESS, DEFAULT_SCENE_TRIGGER_ADDRESS, DEFAULT_SCENE_FEEDBACK_ADDRESS, DEFAULT_SLAVE, DEFAULT_TIMEOUT, DOMAIN,
     LIGHT_KIND_DIMMABLE, LIGHT_KIND_SWITCHABLE,
 )
@@ -83,7 +84,7 @@ class ISYGLTConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 return self.async_create_entry(
                     title=user_input[CONF_NAME],
                     data={CONF_HOST: host, CONF_PORT: port, CONF_TIMEOUT: timeout},
-                    options={CONF_LIGHTS: [], CONF_SWITCHES: [], CONF_COVERS: [], CONF_CLIMATES: [], CONF_SCENES: []},
+                    options={CONF_LIGHTS: [], CONF_SWITCHES: [], CONF_COVERS: [], CONF_CLIMATES: [], CONF_SCENES: [], CONF_SCAN_INTERVAL: float(user_input[CONF_SCAN_INTERVAL])},
                 )
             errors["base"] = "cannot_connect"
         schema = vol.Schema({
@@ -91,6 +92,12 @@ class ISYGLTConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             vol.Required(CONF_HOST): str,
             vol.Required(CONF_PORT, default=DEFAULT_PORT): vol.All(vol.Coerce(int), vol.Range(min=1, max=65535)),
             vol.Required(CONF_TIMEOUT, default=DEFAULT_TIMEOUT): vol.All(vol.Coerce(float), vol.Range(min=0.5, max=30)),
+            vol.Required(CONF_SCAN_INTERVAL, default=DEFAULT_SCAN_INTERVAL): selector.NumberSelector(
+                selector.NumberSelectorConfig(
+                    min=MIN_SCAN_INTERVAL, max=MAX_SCAN_INTERVAL, step=0.1,
+                    mode=selector.NumberSelectorMode.BOX, unit_of_measurement="s"
+                )
+            ),
         })
         return self.async_show_form(step_id="user", data_schema=schema, errors=errors)
 
@@ -106,11 +113,29 @@ class ISYGLTOptionsFlow(OptionsFlowWithReload):
         self._pending_climate: dict[str, Any] | None = None
 
     async def async_step_init(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
-        menu = ["add_light", "add_switch", "add_cover", "add_climate", "add_scene"]
+        menu = ["controller_settings", "add_light", "add_switch", "add_cover", "add_climate", "add_scene"]
         for key, step in ((CONF_LIGHTS, "remove_light"), (CONF_SWITCHES, "remove_switch"), (CONF_COVERS, "remove_cover"), (CONF_CLIMATES, "remove_climate"), (CONF_SCENES, "remove_scene")):
             if self.config_entry.options.get(key):
                 menu.append(step)
         return self.async_show_menu(step_id="init", menu_options=menu)
+
+    async def async_step_controller_settings(self, user_input=None) -> ConfigFlowResult:
+        """Change controller-wide polling settings."""
+        if user_input is not None:
+            options = deepcopy(dict(self.config_entry.options))
+            options[CONF_SCAN_INTERVAL] = float(user_input[CONF_SCAN_INTERVAL])
+            return self.async_create_entry(data=options)
+
+        current = float(self.config_entry.options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL))
+        schema = vol.Schema({
+            vol.Required(CONF_SCAN_INTERVAL, default=current): selector.NumberSelector(
+                selector.NumberSelectorConfig(
+                    min=MIN_SCAN_INTERVAL, max=MAX_SCAN_INTERVAL, step=0.1,
+                    mode=selector.NumberSelectorMode.BOX, unit_of_measurement="s"
+                )
+            )
+        })
+        return self.async_show_form(step_id="controller_settings", data_schema=schema)
 
     def _save_entity(self, collection: str, user_input: dict[str, Any]) -> ConfigFlowResult:
         options = deepcopy(dict(self.config_entry.options))
@@ -299,7 +324,14 @@ class ISYGLTOptionsFlow(OptionsFlowWithReload):
         })
         return self.async_show_form(step_id="add_climate_airco", data_schema=schema, errors=errors)
 
-    async def _remove(self, collection: str, step_id: str, user_input, empty_reason: str) -> ConfigFlowResult:
+    async def _remove(
+        self,
+        collection: str,
+        step_id: str,
+        user_input,
+        empty_reason: str,
+        device_prefix: str,
+    ) -> ConfigFlowResult:
         items = list(self.config_entry.options.get(collection, []))
         if not items:
             return self.async_abort(reason=empty_reason)
@@ -307,6 +339,22 @@ class ISYGLTOptionsFlow(OptionsFlowWithReload):
             uid = user_input[CONF_ENTITY_UID]
             options = deepcopy(dict(self.config_entry.options))
             options[collection] = [item for item in items if item[CONF_ENTITY_UID] != uid]
+
+            # OptionsFlowWithReload unloads the entities after this step, but Home
+            # Assistant deliberately keeps devices in the device registry unless
+            # the integration removes them. Remove the corresponding ISYGLT
+            # device here so it does not remain as an orphan in Settings > Devices.
+            device_registry = dr.async_get(self.hass)
+            identifier = (
+                DOMAIN,
+                f"{device_prefix}_{self.config_entry.entry_id}_{uid}",
+            )
+            device = device_registry.async_get_device_by_identifier(
+                identifier, self.config_entry.entry_id
+            )
+            if device is not None:
+                device_registry.async_remove_device(device.id)
+
             return self.async_create_entry(data=options)
         choices = [selector.SelectOptionDict(value=item[CONF_ENTITY_UID], label=f"{item[CONF_NAME]} — slave {item[CONF_SLAVE]}") for item in items]
         return self.async_show_form(step_id=step_id, data_schema=vol.Schema({
@@ -314,16 +362,16 @@ class ISYGLTOptionsFlow(OptionsFlowWithReload):
         }))
 
     async def async_step_remove_light(self, user_input=None):
-        return await self._remove(CONF_LIGHTS, "remove_light", user_input, "no_lights")
+        return await self._remove(CONF_LIGHTS, "remove_light", user_input, "no_lights", "light")
 
     async def async_step_remove_switch(self, user_input=None):
-        return await self._remove(CONF_SWITCHES, "remove_switch", user_input, "no_switches")
+        return await self._remove(CONF_SWITCHES, "remove_switch", user_input, "no_switches", "switch")
 
     async def async_step_remove_cover(self, user_input=None):
-        return await self._remove(CONF_COVERS, "remove_cover", user_input, "no_covers")
+        return await self._remove(CONF_COVERS, "remove_cover", user_input, "no_covers", "cover")
 
     async def async_step_remove_climate(self, user_input=None):
-        return await self._remove(CONF_CLIMATES, "remove_climate", user_input, "no_climates")
+        return await self._remove(CONF_CLIMATES, "remove_climate", user_input, "no_climates", "climate")
 
     async def async_step_remove_scene(self, user_input=None):
-        return await self._remove(CONF_SCENES, "remove_scene", user_input, "no_scenes")
+        return await self._remove(CONF_SCENES, "remove_scene", user_input, "no_scenes", "scene")

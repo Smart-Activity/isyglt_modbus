@@ -76,6 +76,7 @@ async def async_setup_entry(
 class ISYGLTNativeCover(ISYGLTEntity, CoverEntity):
     """Cover controlled by two native ISYGLT NE pushbutton addresses."""
 
+    _isyglt_periodic_update = False
     _attr_supported_features = (
         CoverEntityFeature.OPEN | CoverEntityFeature.CLOSE | CoverEntityFeature.STOP
     )

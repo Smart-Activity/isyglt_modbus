@@ -1,5 +1,22 @@
 # Changelog
 
+## v0.8.2
+
+- Added a controller-wide, freely configurable polling interval.
+- Polling interval can be changed afterwards via **Configure → Hoofdcontroller instellingen**.
+- Minimum polling interval is **0.1 second**; maximum is 3600 seconds.
+- Existing installations default to **5.0 seconds** when no polling option is stored yet.
+- Added one central polling manager per ISYGLT controller so Light, Switch, Scene, Climate and legacy readable Cover entities use the configured interval instead of Home Assistant's generic entity polling cadence.
+- Native Covers and Button entities remain event/command driven and are not polled because they have no feedback value to read.
+- Changing the interval reloads the config entry so the new interval becomes active immediately after configuration.
+
+## v0.8.1
+
+- Fixed removal of configured ISYGLT Lights, Switches, Covers, Climate devices and Scenes so their Home Assistant Device Registry entries are removed too.
+- Added automatic cleanup of orphaned ISYGLT child devices left behind by older releases; this runs when the integration loads.
+- Added support for deleting an ISYGLT child device from Home Assistant's device page while also removing the corresponding integration configuration.
+- The ISYGLT main controller remains protected from individual device deletion; remove the integration to remove the controller.
+
 ## 0.8.0
 - Native ISYGLT Climate configuration added.
 - Desired temperature uses an M address (holding register); measured temperature uses an SM address (input register / FC04).
