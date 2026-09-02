@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import logging
-import math
 from typing import Any
 
 from homeassistant.components.light import ATTR_BRIGHTNESS, ColorMode, LightEntity
@@ -36,8 +35,8 @@ from .entity import ISYGLTEntity
 from .modbus import ISYGLTModbusError
 
 _LOGGER = logging.getLogger(__name__)
-BRIGHTNESS_SCALE = (1, MODBUS_MAX)
-
+LEGACY_BRIGHTNESS_SCALE = (1, MODBUS_MAX)
+NATIVE_DIMMER_MAX = 255
 
 async def async_setup_entry(
     hass: HomeAssistant,
@@ -115,7 +114,7 @@ class ISYGLTLight(ISYGLTEntity, LightEntity):
             )
 
         self._value = 0
-        self._last_nonzero = MODBUS_MAX
+        self._last_nonzero = MODBUS_MAX if self._legacy else NATIVE_DIMMER_MAX
         self._available = True
 
         if self._light_kind == LIGHT_KIND_SWITCHABLE and not self._legacy:
@@ -168,7 +167,11 @@ class ISYGLTLight(ISYGLTEntity, LightEntity):
             return None
         if self._value <= MODBUS_MIN:
             return 0
-        return value_to_brightness(BRIGHTNESS_SCALE, self._value)
+        if not self._legacy:
+            # Native ISYGLT M dimmers use exactly the HA 0..255 brightness scale.
+            return max(0, min(NATIVE_DIMMER_MAX, int(self._value)))
+        # Preserve the original legacy 1..100 -> HA 0..255 conversion.
+        return value_to_brightness(LEGACY_BRIGHTNESS_SCALE, self._value)
 
     async def async_update(self) -> None:
         """Read feedback from the automatically resolved ISYGLT address."""
@@ -177,7 +180,7 @@ class ISYGLTLight(ISYGLTEntity, LightEntity):
                 raw = await self._runtime_data.client.async_read_holding_register(
                     self._config[CONF_SLAVE], self._config[CONF_REGISTER]
                 )
-                self._value = max(MODBUS_MIN, min(MODBUS_MAX, raw))
+                self._value = max(MODBUS_MIN, min(NATIVE_DIMMER_MAX, raw))
             elif self._light_kind == LIGHT_KIND_DIMMABLE:
                 raw = await self._runtime_data.client.async_read_holding_register(
                     self._config[CONF_SLAVE], self._address.protocol_address
@@ -212,11 +215,15 @@ class ISYGLTLight(ISYGLTEntity, LightEntity):
             brightness = int(kwargs[ATTR_BRIGHTNESS])
             if brightness <= 0:
                 value = 0
-            else:
-                value = math.ceil(brightness_to_value(BRIGHTNESS_SCALE, brightness))
+            elif self._legacy:
+                value = round(brightness_to_value(LEGACY_BRIGHTNESS_SCALE, brightness))
                 value = max(1, min(MODBUS_MAX, value))
+            else:
+                # Native ISYGLT expects HA brightness directly: 1..255.
+                value = max(1, min(NATIVE_DIMMER_MAX, brightness))
         else:
-            value = self._last_nonzero if self._last_nonzero > 0 else MODBUS_MAX
+            default_max = MODBUS_MAX if self._legacy else NATIVE_DIMMER_MAX
+            value = self._last_nonzero if self._last_nonzero > 0 else default_max
 
         await self._async_write_dimmable(value)
 

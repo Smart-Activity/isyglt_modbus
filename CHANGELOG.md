@@ -1,3 +1,9 @@
+## v0.8.4
+
+- Dimbare ISYGLT M-lights gebruiken nu rechtstreeks de 0–255 schaal.
+- Home Assistant brightness 255 schrijft M=255 en wordt als 100% weergegeven.
+- M-feedback 0–255 wordt rechtstreeks als Home Assistant brightness gebruikt.
+
 ## v0.8.3
 
 - Fix Home Assistant 2026.8+ startup regression in orphan-device cleanup.
