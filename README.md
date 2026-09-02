@@ -112,7 +112,7 @@ Feedback -> NA 1.1
 
 Climate is still the earlier generic register implementation. It will be migrated to native ISYGLT temperature/setpoint semantics after the exact scaling and addresses have been confirmed.
 
-## Polling interval (v0.8.2)
+## Polling interval (v0.8.3)
 
 Each ISYGLT main controller now has its own polling interval. The default is **5.0 seconds** and the value can be changed later through **Settings → Devices & services → ISYGLT → Configure → Hoofdcontroller instellingen**.
 

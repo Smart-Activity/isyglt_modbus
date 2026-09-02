@@ -1,3 +1,9 @@
+## v0.8.3
+
+- Fix Home Assistant 2026.8+ startup regression in orphan-device cleanup.
+- Iterate over Device Registry values (`DeviceEntry`) instead of device ID keys.
+- Keeps v0.8.2 configurable controller polling unchanged.
+
 # Changelog
 
 ## v0.8.2

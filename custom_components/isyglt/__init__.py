@@ -142,9 +142,10 @@ def _remove_stale_devices(hass: HomeAssistant, entry: ConfigEntry) -> None:
     entry_marker = f"_{entry.entry_id}_"
     controller = f"controller_{entry.entry_id}"
 
-    # In HA 2026.8+ registry.devices is a read-only iterable. Work on a tuple
-    # because async_remove_device mutates the registry while we iterate.
-    for device in tuple(registry.devices):
+    # In HA 2026.8+ registry.devices is a mapping-like registry container.
+    # Iterate over its values (DeviceEntry objects), not its keys (device IDs),
+    # and snapshot them because async_remove_device mutates the registry.
+    for device in tuple(registry.devices.values()):
         matching = {
             identifier
             for identifier in device.identifiers
