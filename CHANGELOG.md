@@ -1,3 +1,9 @@
+## v0.8.5
+
+- Fix: native dimbare M-lights worden bij feedback nu correct begrensd op 255 in plaats van 100.
+- Fix: legacy dimmers behouden hun oorspronkelijke 0–100 feedbackbereik.
+- Hierdoor kan M=255 weer als 100% brightness in Home Assistant worden weergegeven.
+
 ## v0.8.4
 
 - Dimbare ISYGLT M-lights gebruiken nu rechtstreeks de 0–255 schaal.

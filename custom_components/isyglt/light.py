@@ -180,12 +180,12 @@ class ISYGLTLight(ISYGLTEntity, LightEntity):
                 raw = await self._runtime_data.client.async_read_holding_register(
                     self._config[CONF_SLAVE], self._config[CONF_REGISTER]
                 )
-                self._value = max(MODBUS_MIN, min(NATIVE_DIMMER_MAX, raw))
+                self._value = max(MODBUS_MIN, min(MODBUS_MAX, raw))
             elif self._light_kind == LIGHT_KIND_DIMMABLE:
                 raw = await self._runtime_data.client.async_read_holding_register(
                     self._config[CONF_SLAVE], self._address.protocol_address
                 )
-                self._value = max(MODBUS_MIN, min(MODBUS_MAX, raw))
+                self._value = max(MODBUS_MIN, min(NATIVE_DIMMER_MAX, raw))
             else:
                 state = await self._runtime_data.client.async_read_coil(
                     self._config[CONF_SLAVE], self._address.protocol_address
